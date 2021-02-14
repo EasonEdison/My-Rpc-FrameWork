@@ -50,7 +50,6 @@ public class RpcClientProxy implements InvocationHandler {
         RpcResponse<Object> rpcResponse = null;
         CompletableFuture<RpcResponse<Object>> future = (CompletableFuture<RpcResponse<Object>>) rpcClient
             .sendRequest(rpcRequest);
-        System.out.println("send也没问题");
         rpcResponse = future.get();
         check(rpcResponse, rpcRequest);
         return rpcResponse.getData();

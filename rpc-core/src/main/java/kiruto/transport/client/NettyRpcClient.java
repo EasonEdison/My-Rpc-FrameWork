@@ -73,16 +73,6 @@ public class NettyRpcClient implements RpcClient {
         InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
         CompletableFuture<RpcResponse<Object>> resultFuture = new CompletableFuture<>();
         Channel channel = getChannel(inetSocketAddress);
-        // 先用别的获取channel方法试试
-        // Channel channel = null;
-        // try {
-        //     ChannelFuture future2 = bootstrap.connect(host, port).sync();
-        //     channel = future2.channel();
-        // } catch (InterruptedException e) {
-        //     e.printStackTrace();
-        // }
-        System.out.println("channel " + channel);
-        System.out.println("active " + channel.isActive());
         if (channel != null && channel.isActive()) {
             // 添加到任务处理列表, 方便Handler处理
             unprocessedRequest.put(rpcRequest.getRequestId(), resultFuture);
@@ -131,7 +121,6 @@ public class NettyRpcClient implements RpcClient {
         // 指定特定的监听类型，我觉得这块可以用sync
         bootstrap.connect(inetSocketAddress).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                System.out.println("连接陈工");
                 log.info("客户端连接 {} 成功！", inetSocketAddress.toString());
                 completableFuture.complete(future.channel());
             } else {
