@@ -15,6 +15,8 @@ import io.netty.handler.logging.LoggingHandler;
 import kiruto.entity.RpcMessage;
 import kiruto.entity.RpcRequest;
 import kiruto.entity.RpcResponse;
+import kiruto.registry.ServiceDiscovery;
+import kiruto.registry.zk.ZKServiceDiscovery;
 import kiruto.transport.RpcClient;
 import kiruto.transport.codec.RpcConstants;
 import kiruto.transport.codec.RpcMessageDecoder;
@@ -38,6 +40,7 @@ public class NettyRpcClient implements RpcClient {
     private final EventLoopGroup eventLoopGroup;
     private final UnprocessedRequest unprocessedRequest;
     private final ClientChannelProvider channelProvider;
+    private final ServiceDiscovery serviceDiscovery;
     private String host = "localhost";
     private int port = 9001;
 
@@ -64,13 +67,14 @@ public class NettyRpcClient implements RpcClient {
 
         this.unprocessedRequest = SingletonFactory.getInstance(UnprocessedRequest.class);
         this.channelProvider = SingletonFactory.getInstance(ClientChannelProvider.class);
+        this.serviceDiscovery = SingletonFactory.getInstance(ZKServiceDiscovery.class);
     }
 
     @Override
     public Object sendRequest(RpcRequest rpcRequest) {
         String serviceName = rpcRequest.toRpcServiceProperties().toRpcServiceName();
-        // 先直接写死
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
+        // 查找服务
+        InetSocketAddress inetSocketAddress = serviceDiscovery.lookupService(serviceName);
         CompletableFuture<RpcResponse<Object>> resultFuture = new CompletableFuture<>();
         Channel channel = getChannel(inetSocketAddress);
         if (channel != null && channel.isActive()) {

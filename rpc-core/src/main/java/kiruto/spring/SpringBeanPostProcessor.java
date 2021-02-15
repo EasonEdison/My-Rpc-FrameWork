@@ -44,7 +44,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
             RpcServiceProperties rpcServiceProperties = RpcServiceProperties.builder()
                 .group(annotation.group())
                 .version(annotation.version()).build();
-            serviceProvider.addService(bean, rpcServiceProperties);
+            serviceProvider.publishService(bean, rpcServiceProperties);
         }
         return bean;
     }

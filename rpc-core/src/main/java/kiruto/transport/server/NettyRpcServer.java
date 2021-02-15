@@ -20,14 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import naruto.factory.SingletonFactory;
 import org.springframework.stereotype.Component;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 @Slf4j
 @Component
 public class NettyRpcServer implements RpcServer {
 
-    // private String host = "192.168.153.128";
-    private String host = "localhost";
-
-    private Integer port = 9001;
+    public static final int PORT = 9001;
 
     private final ServiceProviderImpl ServiceProviderImpl;
 
@@ -42,6 +42,12 @@ public class NettyRpcServer implements RpcServer {
 
     @Override
     public void start() {
+        String host = "localhost";
+        try {
+            host = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -67,7 +73,7 @@ public class NettyRpcServer implements RpcServer {
                     }
                 });
             // 同步方法等待绑定成功
-            ChannelFuture future = bootstrap.bind(this.host, this.port).sync();
+            ChannelFuture future = bootstrap.bind(host, this.PORT).sync();
             log.info("服务端绑定成功");
             // 同步方法监听关闭，只有关闭了才会继续往下运行
             future.channel().closeFuture().sync();
