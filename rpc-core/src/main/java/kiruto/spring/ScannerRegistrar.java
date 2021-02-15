@@ -10,6 +10,7 @@ import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.StandardAnnotationMetadata;
+import org.springframework.stereotype.Component;
 
 /**
  *获取有指定注解的的类，加载到容器中.
@@ -51,15 +52,15 @@ public class ScannerRegistrar implements ImportBeanDefinitionRegistrar, Resource
         }
         // 自定义注解扫描器
         CustomScanner serviceScanner = new CustomScanner(registry, RpcService.class);
-        // CustomScanner componentScanner = new CustomScanner(registry, Component.class);
+        CustomScanner componentScanner = new CustomScanner(registry, Component.class);
         if (resourceLoader != null) {
             serviceScanner.setResourceLoader(resourceLoader);
-            // componentScanner.setResourceLoader(resourceLoader);
+            componentScanner.setResourceLoader(resourceLoader);
         }
+        // 先把component扫描了，service就扫描不到了
+        componentScanner.scan(rpcScanBasePackage);
         int serviceNum = serviceScanner.scan(rpcScanBasePackage);
-        // int componentNum = componentScanner.scan(rpcScanBasePackage);
-        // componentScanner.scan(rpcScanBasePackage);
         // spring、NettyServer
-        log.info("扫描到的服务数量: {}", serviceNum - 2);
+        log.info("扫描到的服务数量: {}", serviceNum);
     }
 }
