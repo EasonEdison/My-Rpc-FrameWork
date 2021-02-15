@@ -1,7 +1,9 @@
-package doraemon.impl;
+package kiruto.impl;
 
 import doraemon.service.HelloWorld;
+import kiruto.annotation.RpcService;
 
+@RpcService(version = "1", group = "JoJo")
 public class HelloWorldImpl implements HelloWorld {
     @Override
     public String hello(String msg) {

@@ -18,8 +18,10 @@ import kiruto.transport.codec.RpcMessageDecoder;
 import kiruto.transport.codec.RpcMessageEncoder;
 import lombok.extern.slf4j.Slf4j;
 import naruto.factory.SingletonFactory;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class NettyRpcServer implements RpcServer {
 
     // private String host = "192.168.153.128";
@@ -34,8 +36,6 @@ public class NettyRpcServer implements RpcServer {
     }
 
     public void registerService(Object service, RpcServiceProperties rpcServiceProperties) {
-        String serviceName = service.getClass().getInterfaces()[0].getName();
-        rpcServiceProperties.setServiceName(serviceName);
         // rpcServiceProperties.setServiceName(service.getClass().getDeclaringClass().getName());
         ServiceProviderImpl.addService(service, rpcServiceProperties);
     }

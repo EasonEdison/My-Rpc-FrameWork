@@ -23,6 +23,8 @@ public class ServiceProviderImpl implements ServiceProvider {
 
     @Override
     public void addService(Object service, RpcServiceProperties serviceProperties) {
+        String serviceName = service.getClass().getInterfaces()[0].getName();
+        serviceProperties.setServiceName(serviceName);
         String rpcServiceName = serviceProperties.toRpcServiceName();
         if (registeredService.contains(rpcServiceName)) {
             return;
