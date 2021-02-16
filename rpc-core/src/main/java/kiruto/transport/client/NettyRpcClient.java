@@ -12,6 +12,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import kiruto.entity.RpcMessage;
 import kiruto.entity.RpcRequest;
 import kiruto.entity.RpcResponse;
@@ -29,6 +30,7 @@ import naruto.factory.SingletonFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 这个类是给proxy用的
@@ -56,8 +58,8 @@ public class NettyRpcClient implements RpcClient {
                 @Override
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
                     ChannelPipeline pipeline = socketChannel.pipeline();
-                    // 心跳, 先不用
-                    // pipeline.addLast(new IdleStateHandler(0, 5, 0, TimeUnit.SECONDS));
+                    // 如果5s没有收到服务端的写请求，则触发
+                    pipeline.addLast(new IdleStateHandler(0, 5, 0, TimeUnit.SECONDS));
                     pipeline.addLast(new RpcMessageEncoder());
                     pipeline.addLast(new RpcMessageDecoder());
                     // 添加自定义的处理器

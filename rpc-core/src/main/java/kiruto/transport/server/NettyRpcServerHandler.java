@@ -3,6 +3,8 @@ package kiruto.transport.server;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import kiruto.entity.RpcMessage;
 import kiruto.entity.RpcRequest;
@@ -66,6 +68,19 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
         } finally {
             log.info("释放信息");
             ReferenceCountUtil.release(msg);
+        }
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleState state = ((IdleStateEvent) evt).state();
+            if (state == IdleState.READER_IDLE) {
+                log.info("写空闲触发，关闭通道: {}", ctx.channel());
+                ctx.close();
+            }
+        } else {
+            super.userEventTriggered(ctx, evt);
         }
     }
 

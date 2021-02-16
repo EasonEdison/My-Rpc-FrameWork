@@ -1,12 +1,18 @@
 package kiruto.transport.client;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import kiruto.entity.RpcMessage;
 import kiruto.entity.RpcResponse;
 import kiruto.transport.codec.RpcConstants;
 import lombok.extern.slf4j.Slf4j;
+import naruto.enums.CompressTypeEnum;
+import naruto.enums.SerializationTypeEnum;
 import naruto.factory.SingletonFactory;
 
 @Slf4j
@@ -44,7 +50,27 @@ public class NettyRpcClientHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    // 先不做心跳处理
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleState state = ((IdleStateEvent) evt).state();
+            // 如果出发了写空闲，就发个Ping给服务端
+            if (state == IdleState.WRITER_IDLE) {
+                Channel channel = ctx.channel();
+                log.info("发送写空闲包: {}", channel.remoteAddress());
+                RpcMessage rpcMessage = new RpcMessage();
+                rpcMessage.setCompress(CompressTypeEnum.GZIP.getCode());
+                rpcMessage.setMessageType(RpcConstants.HEARTBEAT_REQUEST_TYPE);
+                rpcMessage.setData(RpcConstants.PING);
+                rpcMessage.setCodec(SerializationTypeEnum.KYRO.getCode());
+                channel.writeAndFlush(rpcMessage).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+            }
+        } else {
+            super.userEventTriggered(ctx, evt);
+        }
+
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

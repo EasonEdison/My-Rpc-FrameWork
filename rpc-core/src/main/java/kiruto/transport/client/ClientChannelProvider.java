@@ -22,7 +22,7 @@ public class ClientChannelProvider {
         if (channel != null && channel.isActive()) {
             return channel;
         } else {
-            log.info("获取channel失败");
+            log.info("Channel缓存中不存在: {}", key);
             channelMap.remove(key);
             return null;
         }

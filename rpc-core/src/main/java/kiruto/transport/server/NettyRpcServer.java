@@ -11,6 +11,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import kiruto.entity.RpcServiceProperties;
 import kiruto.provider.ServiceProviderImpl;
 import kiruto.transport.RpcServer;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -64,9 +66,9 @@ public class NettyRpcServer implements RpcServer {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline();
-                        // 先不加心跳试试
-                        // pipeline.addLast(new IdleStateHandler(
-                        //     30,0,0, TimeUnit.SECONDS));
+                        // 如果30s没有收到客户端的读请求(即channelRead方法有没有被调用)，就触发
+                        pipeline.addLast(new IdleStateHandler(
+                            30,0,0, TimeUnit.SECONDS));
                         pipeline.addLast(new RpcMessageEncoder());
                         pipeline.addLast(new RpcMessageDecoder());
                         pipeline.addLast(new NettyRpcServerHandler());

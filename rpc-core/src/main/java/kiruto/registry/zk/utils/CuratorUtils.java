@@ -97,15 +97,14 @@ public class CuratorUtils {
      * 监听子节点的变化，如果发生变化就更新内存中的值.
      */
     private static void registerWatcher(String rpcServiceName, CuratorFramework zkClient) throws Exception {
-        String servicePath = ZK_REGISTER_ROOT_PATH + "/" + rpcServiceName;
-        PathChildrenCache pathChildrenCache = new PathChildrenCache(zkClient, servicePath, true);
+        PathChildrenCache pathChildrenCache = new PathChildrenCache(zkClient, rpcServiceName, true);
         pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework zkClient, PathChildrenCacheEvent pathChildrenCacheEvent)
                 throws Exception {
                 // 发生变化，就更新
-                List<String> serviceAddresses = zkClient.getChildren().forPath(servicePath);
-                SERVICE_ADDRESS_MAP.put(servicePath, serviceAddresses);
+                List<String> serviceAddresses = zkClient.getChildren().forPath(rpcServiceName);
+                SERVICE_ADDRESS_MAP.put(rpcServiceName, serviceAddresses);
             }
         });
         pathChildrenCache.start();
