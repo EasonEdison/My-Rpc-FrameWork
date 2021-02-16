@@ -12,13 +12,16 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import kiruto.entity.RpcServiceProperties;
+import kiruto.hook.CustomShutdownHook;
 import kiruto.provider.ServiceProviderImpl;
 import kiruto.transport.RpcServer;
 import kiruto.transport.codec.RpcMessageDecoder;
 import kiruto.transport.codec.RpcMessageEncoder;
 import lombok.extern.slf4j.Slf4j;
 import naruto.factory.SingletonFactory;
+import naruto.factory.ThreadPoolFactory;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
@@ -44,6 +47,8 @@ public class NettyRpcServer implements RpcServer {
 
     @Override
     public void start() {
+        // 钩子函数，服务退出时，清除注册中心的相关服务
+        CustomShutdownHook.clearAll();
         String host = "localhost";
         try {
             host = InetAddress.getLocalHost().getHostAddress();
@@ -52,6 +57,11 @@ public class NettyRpcServer implements RpcServer {
         }
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        // 创建线程组，IO密集型
+        DefaultEventExecutorGroup serverHandlerGroup = new DefaultEventExecutorGroup(
+            Runtime.getRuntime().availableProcessors() * 2,
+            ThreadPoolFactory.createThreadFactory("server-handler-group",false)
+        );
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
@@ -71,7 +81,7 @@ public class NettyRpcServer implements RpcServer {
                             30,0,0, TimeUnit.SECONDS));
                         pipeline.addLast(new RpcMessageEncoder());
                         pipeline.addLast(new RpcMessageDecoder());
-                        pipeline.addLast(new NettyRpcServerHandler());
+                        pipeline.addLast(serverHandlerGroup, new NettyRpcServerHandler());
                     }
                 });
             // 同步方法等待绑定成功
@@ -85,6 +95,7 @@ public class NettyRpcServer implements RpcServer {
             log.info("服务端已关闭...");
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
+            serverHandlerGroup.shutdownGracefully();
         }
     }
 }

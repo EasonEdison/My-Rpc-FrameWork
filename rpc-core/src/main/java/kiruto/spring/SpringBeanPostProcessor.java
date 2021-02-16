@@ -38,7 +38,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         // 如果这个bean带有该注解
         if (bean.getClass().isAnnotationPresent(RpcService.class)) {
-            log.info("[] 带有注解: []", beanName, RpcService.class.getCanonicalName());
+            log.info("{} 带有注解: {}", beanName, RpcService.class.getCanonicalName());
             // 获取注解带有的信息，进行注册
             RpcService annotation = bean.getClass().getAnnotation(RpcService.class);
             RpcServiceProperties rpcServiceProperties = RpcServiceProperties.builder()

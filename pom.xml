@@ -18,6 +18,7 @@
         <kryo.version>4.0.2</kryo.version>
         <spring.version>5.2.7.RELEASE</spring.version>
         <curator-version>2.13.0</curator-version>
+        <guava.version>29.0-jre</guava.version>
     </properties>
 
     <modules>
