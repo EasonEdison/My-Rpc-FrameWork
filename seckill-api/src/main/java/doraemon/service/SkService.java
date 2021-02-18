@@ -20,21 +20,21 @@ public interface SkService {
     /**
      * 程序锁, 这是一种错误的实现，因为是先释放锁，再提交事物，所以下一个事务可能在上一个事务未提交时获取锁，读到老数据.
      */
-    Result SkLock(long skId, long userId);
+    Result skLock(long skId, long userId);
 
     /**
      * 程序锁AOP.
      */
-    Result SkAopLock(long skId, long userId);
+    Result skAopLock(long skId, long userId);
 
     /**
      * 数据库悲观锁.
      */
-    Result SkDBPCC(long skId, long userId, long number);
+    Result skDBPCC(long skId, long userId);
 
     /**
      * 数据库乐观锁.
      */
-    Result skDBOCC(long skId, long userId, long number);
+    Result skDBOCC(long skId, long userId);
 
 }

@@ -13,7 +13,7 @@ public interface SeckillComdMapper extends BaseMapper<SeckillComd> {
     Object selectSql(SqlVo sql);
 
     @Update("${sql}")
-    void updateSql(SqlVo sqlVo);
+    int updateSql(SqlVo sqlVo);
 
     @Insert("${sql}")
     void insertSql(SqlVo sqlVo);

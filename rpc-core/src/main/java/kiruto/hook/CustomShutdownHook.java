@@ -12,7 +12,7 @@ import java.net.UnknownHostException;
 public class CustomShutdownHook {
 
     public static void clearAll() {
-        log.info("关闭服务后会清楚所有服务");
+        log.info("关闭服务后会清除所有服务");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 InetSocketAddress inetSocketAddress = new InetSocketAddress(

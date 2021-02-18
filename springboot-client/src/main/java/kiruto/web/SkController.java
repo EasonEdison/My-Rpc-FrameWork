@@ -47,7 +47,7 @@ public class SkController {
 
     @ApiOperation(value = "秒杀一: 程序锁")
     @PostMapping("/skLock")
-    public Result SkLock(long skId) {
+    public Result skLock(long skId) {
         // 等待所有线程都执行结束
         CountDownLatch latch = new CountDownLatch(userNum);
         // 清空之前订单
@@ -58,7 +58,88 @@ public class SkController {
         for (int i = 0; i < userNum; i++) {
             long userId = i;
             Runnable task = () -> {
-                Result result = skService.SkLock(skId, userId);
+                Result result = skService.skLock(skId, userId);
+                if (result.getMsg().equals("SUCCESS")) {
+                    log.info("用户 {} 秒杀成功!", userId);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await();
+            Long successCount = skService.getSuccessCount(skId);
+            log.info("一共秒杀出 {} 件商品!", successCount);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Result.ok();
+    }
+
+    @ApiOperation(value = "秒杀二: AOP程序锁")
+    @PostMapping("/skAopLock")
+    public Result skAopLock(long skId) {
+        CountDownLatch latch = new CountDownLatch(userNum);
+        skService.deleteSuccess(skId);
+        log.info("开始秒杀二...");
+        for (int i = 0; i < userNum; i++) {
+            long userId = i;
+            Runnable task = () -> {
+                Result result = skService.skAopLock(skId, userId);
+                if (result.getMsg().equals("SUCCESS")) {
+                    log.info("用户 {} 秒杀成功!", userId);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await();
+            Long successCount = skService.getSuccessCount(skId);
+            log.info("一共秒杀出 {} 件商品!", successCount);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Result.ok();
+    }
+
+    @ApiOperation(value = "秒杀三: 数据库悲观锁")
+    @PostMapping("/skDBPCC")
+    public Result skDBPCC(long skId) {
+        CountDownLatch latch = new CountDownLatch(userNum);
+        skService.deleteSuccess(skId);
+        log.info("开始秒杀三...");
+        for (int i = 0; i < userNum; i++) {
+            long userId = i;
+            Runnable task = () -> {
+                Result result = skService.skDBPCC(skId, userId);
+                if (result.getMsg().equals("SUCCESS")) {
+                    log.info("用户 {} 秒杀成功!", userId);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await();
+            Long successCount = skService.getSuccessCount(skId);
+            log.info("一共秒杀出 {} 件商品!", successCount);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Result.ok();
+    }
+
+    @ApiOperation(value = "秒杀四: 数据库乐观锁")
+    @PostMapping("/skDBOCC")
+    public Result skDBOCC(long skId) {
+        CountDownLatch latch = new CountDownLatch(userNum);
+        skService.deleteSuccess(skId);
+        log.info("开始秒杀三...");
+        for (int i = 0; i < userNum; i++) {
+            long userId = i;
+            Runnable task = () -> {
+                Result result = skService.skDBOCC(skId, userId);
                 if (result.getMsg().equals("SUCCESS")) {
                     log.info("用户 {} 秒杀成功!", userId);
                 }

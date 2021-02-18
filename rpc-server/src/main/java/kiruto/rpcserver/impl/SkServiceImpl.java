@@ -1,8 +1,11 @@
 package kiruto.rpcserver.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import doraemon.entity.Result;
 import doraemon.service.SkService;
 import kiruto.annotation.RpcService;
+import kiruto.rpcserver.anno.ServiceLock;
+import kiruto.rpcserver.entity.SeckillComd;
 import kiruto.rpcserver.entity.SqlVo;
 import kiruto.rpcserver.entity.SuccessKilled;
 import kiruto.rpcserver.enums.SeckillStateEnum;
@@ -10,6 +13,7 @@ import kiruto.rpcserver.exception.SkException;
 import kiruto.rpcserver.mapper.SeckillComdMapper;
 import kiruto.rpcserver.mapper.SuccesskilledMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.concurrent.locks.Lock;
@@ -47,7 +51,8 @@ public class SkServiceImpl implements SkService {
     }
 
     @Override
-    public Result SkLock(long skId, long userId) {
+    @Transactional(rollbackFor = Exception.class)
+    public Result skLock(long skId, long userId) {
         lock.lock();
         try {
             String sql = "select number from seckill where seckill_id = %s";
@@ -76,18 +81,85 @@ public class SkServiceImpl implements SkService {
         return Result.ok(SeckillStateEnum.SUCCESS);
     }
 
+    /**
+     * 用注解，基本就是串行了.
+     */
     @Override
-    public Result SkAopLock(long skId, long userId) {
-        return null;
+    @ServiceLock
+    @Transactional(rollbackFor = Exception.class)
+    public Result skAopLock(long skId, long userId) {
+        // 整个已经被try、lock包围了
+        String sql = "select number from seckill where seckill_id = %s";
+        Object object = seckillComdMapper.selectSql(new SqlVo(String.format(sql, skId)));
+        Long number = ((Number) object).longValue();
+        if (number > 0) {
+            // 更新数量
+            sql = "update seckill set number = number - 1 where seckill_id = %s";
+            seckillComdMapper.updateSql(new SqlVo(String.format(sql, skId)));
+            // 生成订单
+            SuccessKilled successKilled = new SuccessKilled();
+            successKilled.setSeckillId(skId);
+            successKilled.setUserId(userId);
+            successKilled.setState(Short.parseShort(number + ""));
+            successKilled.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            successkilledMapper.insert(successKilled);
+        } else {
+            return Result.error(SeckillStateEnum.END);
+        }
+        return Result.ok(SeckillStateEnum.SUCCESS);
     }
 
+    /**
+     * update后面的条件取得是范围，而且没走索引，会锁表.
+     */
     @Override
-    public Result SkDBPCC(long skId, long userId, long number) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Result skDBPCC(long skId, long userId) {
+        String sql = "update seckill set number = number - 1 where seckill_id = %s and number > 0";
+        int count = seckillComdMapper.updateSql(new SqlVo(String.format(sql, skId)));
+        // count > 0, 更新成功
+        if (count > 0) {
+            SuccessKilled successKilled = new SuccessKilled();
+            successKilled.setSeckillId(skId);
+            successKilled.setUserId(userId);
+            // 这里并不知道数量，也没必要查
+            successKilled.setState((short) 0);
+            successKilled.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            successkilledMapper.insert(successKilled);
+            return Result.ok(SeckillStateEnum.SUCCESS);
+        } else {
+            return Result.error(SeckillStateEnum.END);
+        }
     }
 
+    /**
+     * 每次查询都会差全部数据，或者说至少带上版本，如果版本对上了，就能更新，
+     * 如果没对上，说明在这之前已经有了别的更新, 此时无法再进行更新.
+     */
     @Override
-    public Result skDBOCC(long skId, long userId, long number) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Result skDBOCC(long skId, long userId) {
+        // 可能为空
+        QueryWrapper<SeckillComd> wrapper = new QueryWrapper<>();
+        wrapper.eq("seckill_id", skId);
+        SeckillComd seckillComd = seckillComdMapper.selectOne(wrapper);
+        if (seckillComd != null && seckillComd.getNumber() >= 1) {
+            String sql = "update seckill set number = number - 1 where seckill_id = %s and version = %s";
+            int count = seckillComdMapper.updateSql(new SqlVo(String.format(sql, skId, seckillComd.getVersion())));
+            if (count > 0) {
+                SuccessKilled successKilled = new SuccessKilled();
+                successKilled.setSeckillId(skId);
+                successKilled.setUserId(userId);
+                successKilled.setState((short) 0);
+                successKilled.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                successkilledMapper.insert(successKilled);
+                return Result.ok(SeckillStateEnum.SUCCESS);
+            } else {
+                return Result.error(SeckillStateEnum.END);
+            }
+        } else {
+            return Result.error(SeckillStateEnum.END);
+        }
     }
+
 }
