@@ -6,6 +6,6 @@
 /seckill-api/target
 /springboot-client/target
 /.mvn/
-/rpc-server/target
-/rpc-server/.mvn
+/rpc-server/target/
+/rpc-server/.mvn/
 /rpc-server/.gitignore
