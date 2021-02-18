@@ -22,12 +22,16 @@ import kiruto.transport.RpcClient;
 import kiruto.transport.codec.RpcConstants;
 import kiruto.transport.codec.RpcMessageDecoder;
 import kiruto.transport.codec.RpcMessageEncoder;
+import kiruto.transport.server.NettyRpcServerHandler;
 import lombok.extern.slf4j.Slf4j;
 import naruto.enums.CompressTypeEnum;
 import naruto.enums.SerializationTypeEnum;
 import naruto.factory.SingletonFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +49,7 @@ public class NettyRpcClient implements RpcClient {
     private final ServiceDiscovery serviceDiscovery;
     private String host = "localhost";
     private int port = 9001;
+    private String codeName;
 
     public NettyRpcClient() {
         eventLoopGroup = new NioEventLoopGroup();
@@ -70,10 +75,24 @@ public class NettyRpcClient implements RpcClient {
         this.unprocessedRequest = SingletonFactory.getInstance(UnprocessedRequest.class);
         this.channelProvider = SingletonFactory.getInstance(ClientChannelProvider.class);
         this.serviceDiscovery = SingletonFactory.getInstance(ZKServiceDiscovery.class);
+        //
+
     }
 
     @Override
     public Object sendRequest(RpcRequest rpcRequest) {
+        if (codeName == null) {
+            try {
+                InputStream in = NettyRpcServerHandler.class.getResourceAsStream("/serializer.properties");
+                Properties properties = new Properties();
+                properties.load(in);
+                codeName = properties.getProperty("codename");
+                log.info("编码类型为: {}", codeName);
+            } catch (IOException e) {
+                codeName = "kyro";
+                log.info("编码类型未设置，使用默认值: kyro");
+            }
+        }
         String serviceName = rpcRequest.toRpcServiceProperties().toRpcServiceName();
         // 查找服务
         InetSocketAddress inetSocketAddress = serviceDiscovery.lookupService(serviceName);
@@ -87,7 +106,7 @@ public class NettyRpcClient implements RpcClient {
             rpcMessage.setData(rpcRequest);
             rpcMessage.setMessageType(RpcConstants.REQUEST_TYPE);
             rpcMessage.setCompress(CompressTypeEnum.GZIP.getCode());
-            rpcMessage.setCodec(SerializationTypeEnum.KYRO.getCode());
+            rpcMessage.setCodec(SerializationTypeEnum.getCode(codeName));
             // 但是根本收不到消息，说明还是没法送出去？还是说那边接受有问题？
             channel.writeAndFlush(rpcMessage).addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {

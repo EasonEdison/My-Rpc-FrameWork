@@ -17,13 +17,30 @@ import naruto.enums.RpcResponseCodeEnum;
 import naruto.enums.SerializationTypeEnum;
 import naruto.factory.SingletonFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 @Slf4j
 public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
 
     private final RequestHandler requestHandler;
 
+    private  String codeName;
+
     public NettyRpcServerHandler() {
+        try {
+            InputStream in = NettyRpcServerHandler.class.getResourceAsStream("/serializer.properties");
+            Properties properties = new Properties();
+            properties.load(in);
+            codeName = properties.getProperty("codename");
+            log.info("编码类型为: {}", codeName);
+        } catch (IOException e) {
+            codeName = "kyro";
+            log.info("编码类型未设置，使用默认值: kyro");
+        }
         requestHandler = SingletonFactory.getInstance(RequestHandler.class);
+        // 读取配置文件序列化内容
     }
 
     /**
@@ -31,13 +48,12 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        log.info("读取成功");
         try {
             if (msg instanceof RpcMessage) {
                 log.info("服务器读取信息: {}", msg);
                 byte messageType = ((RpcMessage) msg).getMessageType();
                 RpcMessage rpcMessage = new RpcMessage();
-                rpcMessage.setCodec(SerializationTypeEnum.KYRO.getCode());
+                rpcMessage.setCodec(SerializationTypeEnum.getCode(codeName));
                 rpcMessage.setCompress(CompressTypeEnum.GZIP.getCode());
                 if (messageType == RpcConstants.HEARTBEAT_REQUEST_TYPE) {
                     // 心跳包
@@ -53,6 +69,7 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
                         RpcResponse<Object> response = RpcResponse.success(
                             result, request.getRequestId()
                         );
+                        log.info("信息为: {}", response);
                         rpcMessage.setData(response);
                     } else {
                         RpcResponse<Object> response = RpcResponse.fail(

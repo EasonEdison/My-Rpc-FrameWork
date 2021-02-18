@@ -19,11 +19,14 @@
         <spring.version>5.2.7.RELEASE</spring.version>
         <curator-version>2.13.0</curator-version>
         <guava.version>29.0-jre</guava.version>
+        <swagger.version>2.7.0</swagger.version>
+        <mybatis-plus-version>3.3.2</mybatis-plus-version>
+        <mysql-version>5.1.38</mysql-version>
     </properties>
 
     <modules>
         <module>rpc-core</module>
-        <module>rpc-sever</module>
+        <module>rpc-server</module>
         <module>seckill-api</module>
         <module>rpc-common</module>
         <module>springboot-client</module>

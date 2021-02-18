@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum SerializationTypeEnum {
 
     KYRO((byte) 0x01, "kyro"),
-    PROTOSTUFF((byte) 0x02, "protostuff");
+    PROTOSTUFF((byte) 0x02, "protostuff"),
+    JSON((byte) 0x03, "json");
 
     private final byte code;
     private final String name;
@@ -20,6 +21,15 @@ public enum SerializationTypeEnum {
             }
         }
         return null;
+    }
+
+    public static byte getCode(String name) {
+        for (SerializationTypeEnum s : SerializationTypeEnum.values()) {
+            if (s.getName().equals(name)) {
+                return s.getCode();
+            }
+        }
+        return 0;
     }
 
 }

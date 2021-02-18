@@ -11,9 +11,12 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +30,8 @@ public class CuratorUtils {
     private static final Map<String, List<String>> SERVICE_ADDRESS_MAP = new ConcurrentHashMap<>();
     private static final Set<String> REGISTERED_PATH_SET = ConcurrentHashMap.newKeySet();
     private static CuratorFramework zkClient;
-    private static final String DEFAULT_ZOOKEEPER_ADDRESS = "192.168.153.128:2181,192.168.153.128:2182,192.168.153.128:2183";
+    private static final String DEFAULT_ZOOKEEPER_ADDRESS = "192.168.153.128:2181";
+    private static String zookeeper_address;
 
     private CuratorUtils() {
     }
@@ -40,10 +44,21 @@ public class CuratorUtils {
         if (zkClient != null && zkClient.getState() == CuratorFrameworkState.STARTED) {
             return zkClient;
         }
+        // 读取配置文件中的值
+        try {
+            InputStream in = CuratorUtils.class.getResourceAsStream("/zookeeper.properties");
+            Properties properties = new Properties();
+            properties.load(in);
+            zookeeper_address = properties.getProperty("address");
+            log.info("从配置文件中读取到Zookeeper地址: {}", DEFAULT_ZOOKEEPER_ADDRESS);
+        } catch (IOException e) {
+            log.info("配置文件没有设置Zookeeper地址，使用默认值");
+        }
         // 设置重试策略
+        String address = zookeeper_address == null ? DEFAULT_ZOOKEEPER_ADDRESS : zookeeper_address;
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(BASE_SLEEP_TIME, MAX_RETRIES);
         zkClient = CuratorFrameworkFactory.builder()
-            .connectString(DEFAULT_ZOOKEEPER_ADDRESS)
+            .connectString(address)
             .retryPolicy(retryPolicy)
             .build();
         zkClient.start();
