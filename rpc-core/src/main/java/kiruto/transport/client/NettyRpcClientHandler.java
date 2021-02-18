@@ -33,7 +33,7 @@ public class NettyRpcClientHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 先来个简单的
         try {
-            log.info("客户端收到消息: {}", msg);
+            // log.info("客户端收到消息: {}", msg);
             if (msg instanceof RpcMessage) {
                 RpcMessage rpcMessage = (RpcMessage) msg;
                 byte messageType = rpcMessage.getMessageType();

@@ -6,4 +6,5 @@
 /rpc-sever/target
 /seckill-api/target
 /springboot-client/target
+/.mvn/
 

@@ -52,8 +52,7 @@ public class RpcMessageEncoder extends MessageToByteEncoder<RpcMessage> {
             if (messageType != RpcConstants.HEARTBEAT_REQUEST_TYPE
                 && messageType != RpcConstants.HEARTBEAT_RESPONSE_TYPE) {
                 String codeName = SerializationTypeEnum.getName(rpcMessage.getCodec());
-                log.info("编码类型为: {}", codeName);
-                // 后期可以优化这个
+                // log.info("编码类型为: {}", codeName);
                 Serializer serializer = Serializer.getByCode(rpcMessage.getCodec());
                 // 先序列化
                 bodyBytes = serializer.serializer(rpcMessage.getData());

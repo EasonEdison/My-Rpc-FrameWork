@@ -29,7 +29,7 @@ public class ZKServiceDiscovery implements ServiceDiscovery {
             throw new RpcException(RpcErrorMessageEnum.SERVICE_CAN_NOT_BE_FOUND, rpcServiceName);
         }
         String serviceAddress = loadBalance.selectServiceAddress(serviceList, rpcServiceName);
-        log.info("选中的服务器地址为: {}", serviceAddress);
+        // log.info("选中的服务器地址为: {}", serviceAddress);
         String[] address = serviceAddress.split(":");
         String host = address[0];
         int port = Integer.parseInt(address[1]);

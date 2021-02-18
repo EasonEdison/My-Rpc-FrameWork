@@ -9,7 +9,6 @@ import kiruto.entity.RpcRequest;
 import kiruto.entity.RpcResponse;
 import kiruto.serialize.Serializer;
 import lombok.extern.slf4j.Slf4j;
-import naruto.enums.SerializationTypeEnum;
 
 import java.util.Arrays;
 
@@ -83,7 +82,7 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
             Compress compress = Compress.getByCode(compressType);
             bs = compress.decompress(bs);
             Serializer serializer = Serializer.getByCode(codecType);
-            log.info("编码类型为: {}", SerializationTypeEnum.getName(codecType));
+            // log.info("编码类型为: {}", SerializationTypeEnum.getName(codecType));
             // 请求、响应是不用类型
             if (messageType == RpcConstants.REQUEST_TYPE) {
                 RpcRequest rpcRequest = serializer.deserializer(bs, RpcRequest.class);

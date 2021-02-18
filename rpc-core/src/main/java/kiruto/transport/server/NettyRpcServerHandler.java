@@ -50,7 +50,7 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         try {
             if (msg instanceof RpcMessage) {
-                log.info("服务器读取信息: {}", msg);
+                // log.info("服务器读取信息: {}", msg);
                 byte messageType = ((RpcMessage) msg).getMessageType();
                 RpcMessage rpcMessage = new RpcMessage();
                 rpcMessage.setCodec(SerializationTypeEnum.getCode(codeName));
@@ -69,7 +69,7 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
                         RpcResponse<Object> response = RpcResponse.success(
                             result, request.getRequestId()
                         );
-                        log.info("信息为: {}", response);
+                        // log.info("信息为: {}", response);
                         rpcMessage.setData(response);
                     } else {
                         RpcResponse<Object> response = RpcResponse.fail(
@@ -83,7 +83,7 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
                 ctx.writeAndFlush(rpcMessage).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
             }
         } finally {
-            log.info("释放信息");
+            // log.info("释放信息");
             ReferenceCountUtil.release(msg);
         }
     }

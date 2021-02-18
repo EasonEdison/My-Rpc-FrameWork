@@ -59,7 +59,9 @@ public class SkController {
             long userId = i;
             Runnable task = () -> {
                 Result result = skService.SkLock(skId, userId);
-                log.info("用户{}: {}", userId, result.getMsg());
+                if (result.getMsg().equals("SUCCESS")) {
+                    log.info("用户 {} 秒杀成功!", userId);
+                }
                 latch.countDown();
             };
             executor.execute(task);
