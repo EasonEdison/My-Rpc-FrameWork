@@ -3,8 +3,9 @@
 /rpc-common/target
 /rpc-framework-common/target/
 /rpc-core/target
-/rpc-sever/target
 /seckill-api/target
 /springboot-client/target
 /.mvn/
+/rpc-server/target
+/rpc-server/.mvn
 
